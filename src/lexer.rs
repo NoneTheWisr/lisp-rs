@@ -43,12 +43,24 @@ impl<'a> From<&'a str> for Lexer<std::str::Chars<'a>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use Token::*;
 
-    #[test]
-    fn test_string_slice() {
-        assert_eq!(
-            Lexer::from("()").collect::<Vec<_>>(),
-            vec![Ok(Token::LParen), Ok(Token::RParen)]
-        );
+    macro_rules! lexer_tests {
+        ($($name:ident {$input:expr, $output:expr},)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    assert_eq!(
+                        Lexer::from($input).collect::<Result<Vec<_>, _>>(),
+                        $output
+                    );
+                }
+            )*
+        };
+    }
+
+    lexer_tests! {
+        test_ok {"()", Ok(vec![LParen, RParen])},
+        test_err {"a", Err(())},
     }
 }
