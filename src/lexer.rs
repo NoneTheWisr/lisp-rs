@@ -1,9 +1,23 @@
 use std::iter::Peekable;
-
 use crate::token::Token;
 
 struct Lexer<I: Iterator<Item = char>> {
     source: Peekable<I>,
+}
+
+impl<I: Iterator<Item = char>> Lexer<I> {
+    fn next_token(&mut self) -> Option<Result<Token, ()>> {
+        use Token::*;
+
+        let next_char = self.source.next()?;
+        let next_token = match next_char {
+            ')' => Ok(RParen),
+            '(' => Ok(LParen),
+            _ => Err(()),
+        };
+        
+        Some(next_token)
+    }
 }
 
 impl<I> Iterator for Lexer<I>
@@ -13,11 +27,7 @@ where
     type Item = Result<Token, ()>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self.source.next()? {
-            '(' => Some(Ok(Token::LParen)),
-            ')' => Some(Ok(Token::RParen)),
-            _ => Some(Err(())),
-        }
+        self.next_token()
     }
 }
 
