@@ -2,4 +2,5 @@
 pub enum Token {
     LParen,
     RParen,
+    Integer(String),
 }
