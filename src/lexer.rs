@@ -18,14 +18,18 @@ impl<I: Iterator<Item = char>> Lexer<I> {
             '(' => self.accept(LParen),
             ')' => self.accept(RParen),
             c if Self::starts_integer(c) => self.parse_integer(),
+            c if Self::starts_string(c) => self.parse_string(),
             _ => Err(()),
         };
 
         Some(next_token)
     }
 
-    fn accept(&mut self, t: Token) -> TResult {
+    fn consume(&mut self) {
         self.source.next();
+    }
+    fn accept(&mut self, t: Token) -> TResult {
+        self.consume();
         Ok(t)
     }
 
@@ -41,6 +45,21 @@ impl<I: Iterator<Item = char>> Lexer<I> {
                 .peeking_take_while(Self::is_ascii_numeric)
                 .collect(),
         ))
+    }
+
+    fn starts_string(c: &char) -> bool {
+        *c == '"'
+    }
+    fn parse_string(&mut self) -> Result<Token, ()> {
+        self.consume();
+        let contents = self.source.peeking_take_while(|&c| c != '"').collect();
+        
+        if self.source.peek().is_none() {
+            Err(())
+        } else {
+            self.consume();
+            Ok(Token::String(contents))
+        }
     }
 }
 
@@ -97,6 +116,9 @@ mod tests {
         test_ok {"()", Ok(vec![LParen, RParen])},
         test_err {"a", Err(())},
         test_integer_ok_single_digit {"1", Ok(vec![Integer("1".into())])},
-        test_integer_ok_multi_gidit {"12345", Ok(vec![Integer("12345".into())])}
+        test_integer_ok_multi_gidit {"12345", Ok(vec![Integer("12345".into())])},
+        test_string_ok_single {r#"" ""#, Ok(vec![String(" ".into())])},
+        test_string_ok_multi {r#""12345""#, Ok(vec![String("12345".into())])},
+        test_string_err {r#""123"#, Err(())},
     }
 }
