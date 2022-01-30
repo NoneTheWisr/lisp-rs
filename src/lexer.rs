@@ -122,10 +122,10 @@ impl<I: Iterator<Item = char>> Lexer<I> {
 // Iterator ----------------------------------------------------------------- //
 impl<I> Iterator for Lexer<I>
 where
-I: Iterator<Item = char>,
+    I: Iterator<Item = char>,
 {
     type Item = TResult;
-    
+
     fn next(&mut self) -> Option<Self::Item> {
         self.next_token()
     }
@@ -134,7 +134,7 @@ I: Iterator<Item = char>,
 // From for iterators ------------------------------------------------------- //
 impl<I> From<I> for Lexer<I>
 where
-I: Iterator<Item = char>,
+    I: Iterator<Item = char>,
 {
     fn from(source: I) -> Self {
         Self::new(source.peekable())
