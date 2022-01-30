@@ -14,6 +14,9 @@ impl<I: Iterator<Item = char>> Lexer<I> {
         Self { source }
     }
 
+    // ---------------------------------------------------------------------- //
+    // Primary lexing method                                                  //
+    // ---------------------------------------------------------------------- //
     fn next_token(&mut self) -> Option<TResult> {
         use Token::*;
 
@@ -30,18 +33,11 @@ impl<I: Iterator<Item = char>> Lexer<I> {
         Some(next_token)
     }
 
-    fn consume(&mut self) {
-        self.source.next();
-    }
-    fn accept(&mut self, t: Token) -> TResult {
-        self.consume();
-        Ok(t)
-    }
+    // ---------------------------------------------------------------------- //
+    // Token specific lexing methods                                          //
+    // ---------------------------------------------------------------------- //
 
-    fn collect_while<F: FnMut(&char) -> bool>(&mut self, matcher: F) -> String {
-        self.source.peeking_take_while(matcher).collect()
-    }
-
+    // Identifier ----------------------------------------------------------- //
     fn starts_identifier(c: &char) -> bool {
         c.is_ascii_graphic() && !c.is_ascii_digit() && !"()\"".contains(*c)
     }
@@ -49,14 +45,16 @@ impl<I: Iterator<Item = char>> Lexer<I> {
         let matcher = |c: &char| c.is_ascii_graphic() && !"()\"".contains(*c);
         Ok(Token::Identifier(self.collect_while(matcher)))
     }
-
+    
+    // Integer -------------------------------------------------------------- //
     fn starts_integer(c: &char) -> bool {
         c.is_ascii_digit()
     }
     fn parse_integer(&mut self) -> TResult {
         Ok(Token::Integer(self.collect_while(char::is_ascii_digit)))
     }
-
+    
+    // String --------------------------------------------------------------- //
     fn starts_string(c: &char) -> bool {
         *c == '"'
     }
@@ -70,6 +68,20 @@ impl<I: Iterator<Item = char>> Lexer<I> {
             self.consume();
             Ok(Token::String(contents))
         }
+    }
+
+    // ---------------------------------------------------------------------- //
+    // Helper methods                                                         //
+    // ---------------------------------------------------------------------- //
+    fn consume(&mut self) {
+        self.source.next();
+    }
+    fn accept(&mut self, t: Token) -> TResult {
+        self.consume();
+        Ok(t)
+    }
+    fn collect_while<F: FnMut(&char) -> bool>(&mut self, matcher: F) -> String {
+        self.source.peeking_take_while(matcher).collect()
     }
 }
 
