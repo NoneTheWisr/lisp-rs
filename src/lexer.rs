@@ -80,7 +80,7 @@ mod tests {
     use Token::*;
 
     macro_rules! lexer_tests {
-        ($($name:ident {$input:expr, $output:expr},)*) => {
+        ($($name:ident {$input:expr, $output:expr}),*) => {
             $(
                 #[test]
                 fn $name() {
@@ -97,6 +97,6 @@ mod tests {
         test_ok {"()", Ok(vec![LParen, RParen])},
         test_err {"a", Err(())},
         test_integer_ok_single_digit {"1", Ok(vec![Integer("1".into())])},
-        test_integer_ok_multi_gidit {"12345", Ok(vec![Integer("12345".into())])},
+        test_integer_ok_multi_gidit {"12345", Ok(vec![Integer("12345".into())])}
     }
 }
