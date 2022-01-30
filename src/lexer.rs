@@ -38,27 +38,23 @@ impl<I: Iterator<Item = char>> Lexer<I> {
         Ok(t)
     }
 
+    fn collect_while<F: FnMut(&char) -> bool>(&mut self, matcher: F) -> String {
+        self.source.peeking_take_while(matcher).collect()
+    }
+
     fn starts_identifier(c: &char) -> bool {
         c.is_ascii_graphic() && !c.is_ascii_digit() && !"()\"".contains(*c)
     }
     fn parse_identifier(&mut self) -> TResult {
         let matcher = |c: &char| c.is_ascii_graphic() && !"()\"".contains(*c);
-        Ok(Token::Identifier(
-            self.source
-                .peeking_take_while(matcher)
-                .collect(),
-        ))
+        Ok(Token::Identifier(self.collect_while(matcher)))
     }
 
     fn starts_integer(c: &char) -> bool {
         c.is_ascii_digit()
     }
     fn parse_integer(&mut self) -> TResult {
-        Ok(Token::Integer(
-            self.source
-                .peeking_take_while(char::is_ascii_digit)
-                .collect(),
-        ))
+        Ok(Token::Integer(self.collect_while(char::is_ascii_digit)))
     }
 
     fn starts_string(c: &char) -> bool {
@@ -66,7 +62,7 @@ impl<I: Iterator<Item = char>> Lexer<I> {
     }
     fn parse_string(&mut self) -> Result<Token, ()> {
         self.consume();
-        let contents = self.source.peeking_take_while(|&c| c != '"').collect();
+        let contents = self.collect_while(|&c| c != '"');
 
         if self.source.peek().is_none() {
             Err(())
