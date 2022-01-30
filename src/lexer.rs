@@ -21,6 +21,7 @@ impl<I: Iterator<Item = char>> Lexer<I> {
         let next_token = match next_char {
             '(' => self.accept(LParen),
             ')' => self.accept(RParen),
+            c if Self::starts_identifier(c) => self.parse_identifier(),
             c if Self::starts_integer(c) => self.parse_integer(),
             c if Self::starts_string(c) => self.parse_string(),
             _ => Err(()),
@@ -35,6 +36,18 @@ impl<I: Iterator<Item = char>> Lexer<I> {
     fn accept(&mut self, t: Token) -> TResult {
         self.consume();
         Ok(t)
+    }
+
+    fn starts_identifier(c: &char) -> bool {
+        c.is_ascii_graphic() && !c.is_ascii_digit() && !"()\"".contains(*c)
+    }
+    fn parse_identifier(&mut self) -> TResult {
+        let matcher = |c: &char| c.is_ascii_graphic() && !"()\"".contains(*c);
+        Ok(Token::Identifier(
+            self.source
+                .peeking_take_while(matcher)
+                .collect(),
+        ))
     }
 
     fn starts_integer(c: &char) -> bool {
@@ -54,7 +67,7 @@ impl<I: Iterator<Item = char>> Lexer<I> {
     fn parse_string(&mut self) -> Result<Token, ()> {
         self.consume();
         let contents = self.source.peeking_take_while(|&c| c != '"').collect();
-        
+
         if self.source.peek().is_none() {
             Err(())
         } else {
@@ -111,11 +124,12 @@ mod tests {
 
     lexer_tests! {
         test_ok {"()", Ok(vec![LParen, RParen])},
-        test_err {"a", Err(())},
+        test_identifier {"a124<./S?>F", Ok(vec![Identifier("a124<./S?>F".into())])},
         test_integer_ok_single_digit {"1", Ok(vec![Integer("1".into())])},
         test_integer_ok_multi_gidit {"12345", Ok(vec![Integer("12345".into())])},
         test_string_ok_single {r#"" ""#, Ok(vec![String(" ".into())])},
         test_string_ok_multi {r#""12345""#, Ok(vec![String("12345".into())])},
         test_string_err {r#""123"#, Err(())},
+        test_mixed_1 {"124<./S?>F", Ok(vec![Integer("124".into()), Identifier("<./S?>F".into())])},
     }
 }
