@@ -21,7 +21,7 @@ impl<I: Iterator<Item = char>> Lexer<I> {
         use Token::*;
 
         self.skip_whitespace();
-        let next_char = self.source.peek()?;
+        let next_char = self.peek()?;
 
         let next_token = match next_char {
             '(' => self.accept(LParen),
@@ -42,9 +42,7 @@ impl<I: Iterator<Item = char>> Lexer<I> {
         c.is_ascii_whitespace()
     }
     fn skip_whitespace(&mut self) {
-        self.source
-            .peeking_take_while(Self::is_whitespace)
-            .for_each(drop);
+        self.skip_while(Self::is_whitespace);
     }
 
     // ---------------------------------------------------------------------- //
@@ -76,7 +74,7 @@ impl<I: Iterator<Item = char>> Lexer<I> {
         self.consume();
         let contents = self.collect_while(|&c| c != '"');
 
-        if self.source.peek().is_none() {
+        if self.peek().is_none() {
             Err(())
         } else {
             self.consume();
@@ -87,6 +85,9 @@ impl<I: Iterator<Item = char>> Lexer<I> {
     // ---------------------------------------------------------------------- //
     // Helper methods                                                         //
     // ---------------------------------------------------------------------- //
+    fn peek(&mut self) -> Option<&char> {
+        self.source.peek()
+    }
     fn consume(&mut self) {
         self.source.next();
     }
@@ -94,8 +95,12 @@ impl<I: Iterator<Item = char>> Lexer<I> {
         self.consume();
         Ok(t)
     }
+
     fn collect_while<F: FnMut(&char) -> bool>(&mut self, matcher: F) -> String {
         self.source.peeking_take_while(matcher).collect()
+    }
+    fn skip_while<F: FnMut(&char) -> bool>(&mut self, matcher: F) {
+        self.source.peeking_take_while(matcher).for_each(drop)
     }
 }
 
@@ -145,14 +150,30 @@ mod tests {
     }
 
     lexer_tests! {
-        test_ok {"()", Ok(vec![LParen, RParen])},
-        test_identifier {"a124<./S?>F", Ok(vec![Identifier("a124<./S?>F".into())])},
-        test_integer_ok_single_digit {"1", Ok(vec![Integer("1".into())])},
-        test_integer_ok_multi_gidit {"12345", Ok(vec![Integer("12345".into())])},
-        test_string_ok_single {r#"" ""#, Ok(vec![String(" ".into())])},
-        test_string_ok_multi {r#""12345""#, Ok(vec![String("12345".into())])},
+        test_ok {"()", Ok(vec![
+            LParen,
+            RParen
+        ])},
+        test_identifier {"a124<./S?>F", Ok(vec![
+            Identifier("a124<./S?>F".into())
+        ])},
+        test_integer_ok_single_digit {"1", Ok(vec![
+            Integer("1".into())
+        ])},
+        test_integer_ok_multi_gidit {"12345", Ok(vec![
+            Integer("12345".into())
+        ])},
+        test_string_ok_single {r#"" ""#, Ok(vec![
+            String(" ".into())
+        ])},
+        test_string_ok_multi {r#""12345""#, Ok(vec![
+            String("12345".into())
+        ])},
         test_string_err {r#""123"#, Err(())},
-        test_mixed_1 {"124<./S?>F", Ok(vec![Integer("124".into()), Identifier("<./S?>F".into())])},
+        test_mixed_1 {"124<./S?>F", Ok(vec![
+            Integer("124".into()),
+            Identifier("<./S?>F".into())
+        ])},
         test_mixed_2 {"(+ -5-124<./S?>F 35)", Ok(vec![
             LParen,
             Identifier("+".into()),
