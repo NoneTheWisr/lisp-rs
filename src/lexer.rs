@@ -29,6 +29,7 @@ impl<I: Iterator<Item = char>> Lexer<I> {
             c if Self::starts_identifier(c) => self.parse_identifier(),
             c if Self::starts_integer(c) => self.parse_integer(),
             c if Self::starts_string(c) => self.parse_string(),
+            // Unexpected symbol
             _ => Err(()),
         };
 
@@ -70,11 +71,12 @@ impl<I: Iterator<Item = char>> Lexer<I> {
     fn starts_string(c: &char) -> bool {
         *c == '"'
     }
-    fn parse_string(&mut self) -> Result<Token, ()> {
+    fn parse_string(&mut self) -> TResult {
         self.consume();
         let contents = self.collect_while(|&c| c != '"');
 
         if self.peek().is_none() {
+            // Missing the closing " on a string. Reached EOF
             Err(())
         } else {
             self.consume();
