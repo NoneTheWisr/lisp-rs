@@ -80,7 +80,7 @@ mod tests {
     use Token::*;
 
     macro_rules! lexer_tests {
-        ($($name:ident {$input:expr, $output:expr}),*) => {
+        ($($name:ident {$input:expr, $output:expr}),+ $(,)?) => {
             $(
                 #[test]
                 fn $name() {
