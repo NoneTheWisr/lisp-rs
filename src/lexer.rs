@@ -5,6 +5,10 @@ use crate::token::Token;
 
 type TResult = Result<Token, ()>;
 
+// -------------------------------------------------------------------------- //
+// Main struct                                                                //
+// -------------------------------------------------------------------------- //
+
 struct Lexer<I: Iterator<Item = char>> {
     source: Peekable<I>,
 }
@@ -17,6 +21,7 @@ impl<I: Iterator<Item = char>> Lexer<I> {
     // ---------------------------------------------------------------------- //
     // Primary lexing method                                                  //
     // ---------------------------------------------------------------------- //
+
     fn next_token(&mut self) -> Option<TResult> {
         use Token::*;
 
@@ -39,6 +44,7 @@ impl<I: Iterator<Item = char>> Lexer<I> {
     // ---------------------------------------------------------------------- //
     // Whitespace handling                                                    //
     // ---------------------------------------------------------------------- //
+
     fn is_whitespace(c: &char) -> bool {
         c.is_ascii_whitespace()
     }
@@ -87,6 +93,8 @@ impl<I: Iterator<Item = char>> Lexer<I> {
     // ---------------------------------------------------------------------- //
     // Helper methods                                                         //
     // ---------------------------------------------------------------------- //
+
+    // Single element ------------------------------------------------------- //
     fn peek(&mut self) -> Option<&char> {
         self.source.peek()
     }
@@ -98,6 +106,7 @@ impl<I: Iterator<Item = char>> Lexer<I> {
         Ok(t)
     }
 
+    // Multi element -------------------------------------------------------- //
     fn collect_while<F: FnMut(&char) -> bool>(&mut self, matcher: F) -> String {
         self.source.peeking_take_while(matcher).collect()
     }
@@ -106,31 +115,42 @@ impl<I: Iterator<Item = char>> Lexer<I> {
     }
 }
 
+// -------------------------------------------------------------------------- //
+// Trait implementations                                                      //
+// -------------------------------------------------------------------------- //
+
+// Iterator ----------------------------------------------------------------- //
 impl<I> Iterator for Lexer<I>
 where
-    I: Iterator<Item = char>,
+I: Iterator<Item = char>,
 {
     type Item = TResult;
-
+    
     fn next(&mut self) -> Option<Self::Item> {
         self.next_token()
     }
 }
 
+// From for iterators ------------------------------------------------------- //
 impl<I> From<I> for Lexer<I>
 where
-    I: Iterator<Item = char>,
+I: Iterator<Item = char>,
 {
     fn from(source: I) -> Self {
         Self::new(source.peekable())
     }
 }
 
+// From for string slices --------------------------------------------------- //
 impl<'a> From<&'a str> for Lexer<std::str::Chars<'a>> {
     fn from(source: &'a str) -> Self {
         Self::new(source.chars().peekable())
     }
 }
+
+// -------------------------------------------------------------------------- //
+// Tests                                                                      //
+// -------------------------------------------------------------------------- //
 
 #[cfg(test)]
 mod tests {
