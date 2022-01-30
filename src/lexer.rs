@@ -20,7 +20,9 @@ impl<I: Iterator<Item = char>> Lexer<I> {
     fn next_token(&mut self) -> Option<TResult> {
         use Token::*;
 
+        self.skip_whitespace();
         let next_char = self.source.peek()?;
+
         let next_token = match next_char {
             '(' => self.accept(LParen),
             ')' => self.accept(RParen),
@@ -31,6 +33,18 @@ impl<I: Iterator<Item = char>> Lexer<I> {
         };
 
         Some(next_token)
+    }
+
+    // ---------------------------------------------------------------------- //
+    // Whitespace handling                                                    //
+    // ---------------------------------------------------------------------- //
+    fn is_whitespace(c: &char) -> bool {
+        c.is_ascii_whitespace()
+    }
+    fn skip_whitespace(&mut self) {
+        self.source
+            .peeking_take_while(Self::is_whitespace)
+            .for_each(drop);
     }
 
     // ---------------------------------------------------------------------- //
@@ -45,7 +59,7 @@ impl<I: Iterator<Item = char>> Lexer<I> {
         let matcher = |c: &char| c.is_ascii_graphic() && !"()\"".contains(*c);
         Ok(Token::Identifier(self.collect_while(matcher)))
     }
-    
+
     // Integer -------------------------------------------------------------- //
     fn starts_integer(c: &char) -> bool {
         c.is_ascii_digit()
@@ -53,7 +67,7 @@ impl<I: Iterator<Item = char>> Lexer<I> {
     fn parse_integer(&mut self) -> TResult {
         Ok(Token::Integer(self.collect_while(char::is_ascii_digit)))
     }
-    
+
     // String --------------------------------------------------------------- //
     fn starts_string(c: &char) -> bool {
         *c == '"'
@@ -139,5 +153,12 @@ mod tests {
         test_string_ok_multi {r#""12345""#, Ok(vec![String("12345".into())])},
         test_string_err {r#""123"#, Err(())},
         test_mixed_1 {"124<./S?>F", Ok(vec![Integer("124".into()), Identifier("<./S?>F".into())])},
+        test_mixed_2 {"(+ -5-124<./S?>F 35)", Ok(vec![
+            LParen,
+            Identifier("+".into()),
+            Identifier("-5-124<./S?>F".into()),
+            Integer("35".into()),
+            RParen
+        ])},
     }
 }
