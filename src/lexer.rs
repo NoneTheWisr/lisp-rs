@@ -15,8 +15,8 @@ impl<I: Iterator<Item = char>> Lexer<I> {
 
         let next_char = self.source.peek()?;
         let next_token = match next_char {
-            ')' => self.accept(RParen),
             '(' => self.accept(LParen),
+            ')' => self.accept(RParen),
             c if Self::starts_integer(c) => self.parse_integer(),
             _ => Err(()),
         };
