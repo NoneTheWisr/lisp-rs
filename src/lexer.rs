@@ -10,6 +10,10 @@ struct Lexer<I: Iterator<Item = char>> {
 }
 
 impl<I: Iterator<Item = char>> Lexer<I> {
+    fn new(source: Peekable<I>) -> Self {
+        Self { source }
+    }
+
     fn next_token(&mut self) -> Option<TResult> {
         use Token::*;
 
@@ -79,17 +83,13 @@ where
     I: Iterator<Item = char>,
 {
     fn from(source: I) -> Self {
-        Lexer {
-            source: source.peekable(),
-        }
+        Self::new(source.peekable())
     }
 }
 
 impl<'a> From<&'a str> for Lexer<std::str::Chars<'a>> {
     fn from(source: &'a str) -> Self {
-        Lexer {
-            source: source.chars().peekable(),
-        }
+        Self::new(source.chars().peekable())
     }
 }
 
