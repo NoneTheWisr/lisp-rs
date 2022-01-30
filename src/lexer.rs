@@ -37,16 +37,13 @@ impl<I: Iterator<Item = char>> Lexer<I> {
         Ok(t)
     }
 
-    fn is_ascii_numeric(c: &char) -> bool {
-        "0123456789".contains(*c)
-    }
     fn starts_integer(c: &char) -> bool {
-        Self::is_ascii_numeric(c)
+        c.is_ascii_digit()
     }
     fn parse_integer(&mut self) -> TResult {
         Ok(Token::Integer(
             self.source
-                .peeking_take_while(Self::is_ascii_numeric)
+                .peeking_take_while(char::is_ascii_digit)
                 .collect(),
         ))
     }
