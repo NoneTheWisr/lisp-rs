@@ -9,7 +9,7 @@ use crate::lexer::Error;
 use crate::token::Token;
 
 type Item = Result<Token, Error>;
-type AstResult = Result<Ast, ()>;
+type AstResult = Result<TopLevel, ()>;
 type ExprResult = Result<Expr, ()>;
 type ErrResult = Result<(), ()>;
 
@@ -57,8 +57,8 @@ impl<I: Iterator<Item = Item>> Parser<I> {
         let root_list = self.list_stack.pop().unwrap();
         match root_list.len() {
             0 => Err(()),
-            1 => Ok(Ast::Expr(root_list.into_iter().next().unwrap())),
-            _ => Ok(Ast::ExprList(root_list)),
+            1 => Ok(TopLevel::Single(root_list.into_iter().next().unwrap())),
+            _ => Ok(TopLevel::Multi(root_list)),
         }
     }
 
@@ -92,5 +92,55 @@ impl<I: Iterator<Item = Item>> Parser<I> {
     fn str(&mut self, str: String) -> Option<()> {
         self.list_stack.last_mut().unwrap().push(Expr::Str(str));
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::token::tests::*;
+    use crate::ast::{Expr::*, TopLevel::*};
+
+    macro_rules! parser_tests {
+        ($($name:ident {[$($item:expr),*], $output:expr}),* $(,)?) => {
+            $(
+                #[test]
+                fn $name() {
+                    assert_eq!(
+                        Parser::new(vec![$(Ok($item)),*].into_iter()).parse(),
+                        $output
+                    )
+                }
+            )*
+        }
+    }
+
+    #[rustfmt::skip]
+    parser_tests! {
+        test1 { [int!("1")], Ok(Single(Int(1.into())))},
+        test2 { [lp!(), ident!("+"), int!("1"), int!("9"), rp!()], Ok(
+            Single(List(vec![Ident("+".into()),
+                             Int(1.into()),
+                             Int(9.into())]))
+        )},
+        test3 { [int!("1"), int!("2")], Ok(
+            Multi(vec![Int(1.into()),
+                       Int(2.into())])
+        )},
+        test4 {
+            [
+                lp!(), ident!("+"), lp!(), ident!("*"), int!("2"), int!("5"), rp!(),
+                                    int!("9"), rp!(),
+                int!("1")
+            ],
+            Ok(
+                Multi(vec![List(vec![Ident("+".into()),
+                                     List(vec![Ident("*".into()),
+                                               Int(2.into()),
+                                               Int(5.into())]),
+                                     Int(9.into())]),
+                           Int(1.into())])
+            )
+        },
     }
 }
