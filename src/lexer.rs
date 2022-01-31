@@ -3,7 +3,13 @@ use std::iter::Peekable;
 
 use crate::token::Token;
 
-type TResult = Result<Token, ()>;
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum Error {
+    UnexpectedSymbol(char),
+    UnclosedString,
+}
+
+type TokResult = Result<Token, Error>;
 
 // -------------------------------------------------------------------------- //
 // Main struct                                                                //
@@ -22,7 +28,7 @@ impl<I: Iterator<Item = char>> Lexer<I> {
     // Primary lexing method                                                  //
     // ---------------------------------------------------------------------- //
 
-    fn next_token(&mut self) -> Option<TResult> {
+    fn next_token(&mut self) -> Option<TokResult> {
         use Token::*;
 
         self.skip_whitespace();
@@ -35,7 +41,7 @@ impl<I: Iterator<Item = char>> Lexer<I> {
             c if Self::starts_integer(c) => self.parse_integer(),
             c if Self::starts_string(c) => self.parse_string(),
             // Unexpected symbol
-            _ => Err(()),
+            c => Err(Error::UnexpectedSymbol(c.clone())),
         };
 
         Some(next_token)
@@ -60,7 +66,7 @@ impl<I: Iterator<Item = char>> Lexer<I> {
     fn starts_identifier(c: &char) -> bool {
         c.is_ascii_graphic() && !c.is_ascii_digit() && !"()\"".contains(*c)
     }
-    fn parse_identifier(&mut self) -> TResult {
+    fn parse_identifier(&mut self) -> TokResult {
         let matcher = |c: &char| c.is_ascii_graphic() && !"()\"".contains(*c);
         Ok(Token::Identifier(self.collect_while(matcher)))
     }
@@ -69,7 +75,7 @@ impl<I: Iterator<Item = char>> Lexer<I> {
     fn starts_integer(c: &char) -> bool {
         c.is_ascii_digit()
     }
-    fn parse_integer(&mut self) -> TResult {
+    fn parse_integer(&mut self) -> TokResult {
         Ok(Token::Integer(self.collect_while(char::is_ascii_digit)))
     }
 
@@ -77,13 +83,13 @@ impl<I: Iterator<Item = char>> Lexer<I> {
     fn starts_string(c: &char) -> bool {
         *c == '"'
     }
-    fn parse_string(&mut self) -> TResult {
+    fn parse_string(&mut self) -> TokResult {
         self.consume();
         let contents = self.collect_while(|&c| c != '"');
 
         if self.peek().is_none() {
             // Missing the closing " on a string. Reached EOF
-            Err(())
+            Err(Error::UnclosedString)
         } else {
             self.consume();
             Ok(Token::String(contents))
@@ -101,7 +107,7 @@ impl<I: Iterator<Item = char>> Lexer<I> {
     fn consume(&mut self) {
         self.source.next();
     }
-    fn accept(&mut self, t: Token) -> TResult {
+    fn accept(&mut self, t: Token) -> TokResult {
         self.consume();
         Ok(t)
     }
@@ -124,7 +130,7 @@ impl<I> Iterator for Lexer<I>
 where
     I: Iterator<Item = char>,
 {
-    type Item = TResult;
+    type Item = TokResult;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.next_token()
@@ -176,6 +182,7 @@ mod tests {
             LParen,
             RParen
         ])},
+        test_err {"\0", Err(Error::UnexpectedSymbol('\0'))},
         test_identifier {"a124<./S?>F", Ok(vec![
             Identifier("a124<./S?>F".into())
         ])},
@@ -191,7 +198,7 @@ mod tests {
         test_string_ok_multi {r#""12345""#, Ok(vec![
             String("12345".into())
         ])},
-        test_string_err {r#""123"#, Err(())},
+        test_string_err {r#""123"#, Err(Error::UnclosedString)},
         test_mixed_1 {"124<./S?>F", Ok(vec![
             Integer("124".into()),
             Identifier("<./S?>F".into())
