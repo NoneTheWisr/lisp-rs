@@ -9,7 +9,7 @@ pub enum Token {
 
 #[cfg(test)]
 #[rustfmt::skip]
-pub mod tests {
+pub(crate) mod tests {
     use super::*;
 
     macro_rules! lp { () => { crate::token::Token::LParen } }
