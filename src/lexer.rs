@@ -4,7 +4,7 @@ use std::iter::Peekable;
 use crate::token::Token;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-enum Error {
+pub enum Error {
     UnexpectedSymbol(char),
     UnclosedString,
 }
