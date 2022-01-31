@@ -15,7 +15,7 @@ type TokResult = Result<Token, Error>;
 // Main struct                                                                //
 // -------------------------------------------------------------------------- //
 
-struct Lexer<I: Iterator<Item = char>> {
+pub struct Lexer<I: Iterator<Item = char>> {
     source: Peekable<I>,
 }
 

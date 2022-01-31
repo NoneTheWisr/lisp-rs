@@ -7,14 +7,14 @@ type AstResult = Result<TopLevel, ()>;
 type ExprResult = Result<Expr, ()>;
 type ErrResult = Result<(), ()>;
 
-struct Parser<I: Iterator<Item = Item>> {
+pub struct Parser<I: Iterator<Item = Item>> {
     tokens: I,
     list_stack: Vec<Vec<Expr>>,
     level: u64,
 }
 
 impl<I: Iterator<Item = Item>> Parser<I> {
-    fn new(tokens: I) -> Self {
+    pub fn new(tokens: I) -> Self {
         Parser {
             tokens,
             list_stack: Vec::new(),
@@ -22,7 +22,7 @@ impl<I: Iterator<Item = Item>> Parser<I> {
         }
     }
 
-    fn parse(&mut self) -> AstResult {
+    pub fn parse(&mut self) -> AstResult {
         self.list_stack.push(Vec::new());
         
         // I must be doing something really wrong if I have to use this instead
