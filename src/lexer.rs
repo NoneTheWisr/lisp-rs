@@ -161,7 +161,6 @@ impl<'a> From<&'a str> for Lexer<std::str::Chars<'a>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use Token::*;
     use crate::token::tests::*;
 
     macro_rules! lexer_tests {
