@@ -1,11 +1,12 @@
 use num_bigint::BigInt;
 
-
-pub enum Ast {
-    ExprList(Vec<Expr>),
-    Expr(Expr),
+#[derive(Debug, PartialEq)]
+pub enum TopLevel {
+    Multi(Vec<Expr>),
+    Single(Expr),
 }
 
+#[derive(Debug, PartialEq)]
 pub enum Expr {
     List(Vec<Expr>),
     Ident(String),
