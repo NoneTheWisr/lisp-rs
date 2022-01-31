@@ -162,6 +162,7 @@ impl<'a> From<&'a str> for Lexer<std::str::Chars<'a>> {
 mod tests {
     use super::*;
     use Token::*;
+    use crate::token::tests::*;
 
     macro_rules! lexer_tests {
         ($($name:ident {$input:expr, $output:expr}),+ $(,)?) => {
@@ -179,36 +180,36 @@ mod tests {
 
     lexer_tests! {
         test_ok {"()", Ok(vec![
-            LParen,
-            RParen
+            lp!(),
+            rp!()
         ])},
         test_err {"\0", Err(Error::UnexpectedSymbol('\0'))},
         test_identifier {"a124<./S?>F", Ok(vec![
-            Identifier("a124<./S?>F".into())
+            ident!("a124<./S?>F")
         ])},
         test_integer_ok_single_digit {"1", Ok(vec![
-            Integer("1".into())
+            int!("1")
         ])},
         test_integer_ok_multi_gidit {"12345", Ok(vec![
-            Integer("12345".into())
+            int!("12345")
         ])},
         test_string_ok_single {r#"" ""#, Ok(vec![
-            String(" ".into())
+            str!(" ")
         ])},
         test_string_ok_multi {r#""12345""#, Ok(vec![
-            String("12345".into())
+            str!("12345")
         ])},
         test_string_err {r#""123"#, Err(Error::UnclosedString)},
         test_mixed_1 {"124<./S?>F", Ok(vec![
-            Integer("124".into()),
-            Identifier("<./S?>F".into())
+            int!("124"),
+            ident!("<./S?>F")
         ])},
         test_mixed_2 {"(+ -5-124<./S?>F 35)", Ok(vec![
-            LParen,
-            Identifier("+".into()),
-            Identifier("-5-124<./S?>F".into()),
-            Integer("35".into()),
-            RParen
+            lp!(),
+            ident!("+"),
+            ident!("-5-124<./S?>F"),
+            int!("35"),
+            rp!()
         ])},
     }
 }
