@@ -23,12 +23,15 @@ str_to_ast_tests! {
                          Int(1.into()),
                          Int(9.into())]))
     )},
-    test3 { "(+ (* 2 5) 9)\n1", Ok(
-        Multi(vec![List(vec![Ident("+".into()),
-                             List(vec![Ident("*".into()),
-                                       Int(2.into()),
-                                       Int(5.into())]),
-                             Int(9.into())]),
-                   Int(1.into())])
+    test3 { 
+        "(+ (* 2 5)
+            9)
+         1",
+        Ok(Multi(vec![List(vec![Ident("+".into()),
+                                List(vec![Ident("*".into()),
+                                          Int(2.into()),
+                                          Int(5.into())]),
+                                Int(9.into())]),
+                    Int(1.into())])
     )},
 }
