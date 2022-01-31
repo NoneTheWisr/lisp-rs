@@ -1,9 +1,3 @@
-use std::iter::from_fn;
-use std::str::FromStr;
-
-use itertools::Itertools;
-use num_bigint::BigInt;
-
 use crate::ast::*;
 use crate::lexer::Error;
 use crate::token::Token;
@@ -85,7 +79,7 @@ impl<I: Iterator<Item = Item>> Parser<I> {
         None
     }
     fn int(&mut self, str: String) -> Option<()> {
-        let int = BigInt::from_str(&str).unwrap();
+        let int = str.parse().unwrap();
         self.list_stack.last_mut().unwrap().push(Expr::Int(int));
         None
     }
