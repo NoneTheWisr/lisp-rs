@@ -41,7 +41,7 @@ impl<I: Iterator<Item = Item>> Parser<I> {
                         return Err(err);
                     }
                 }
-                Err(error) => {
+                Err(_error) => {
                     return Err(());
                 }
             }

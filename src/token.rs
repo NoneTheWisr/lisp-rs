@@ -10,8 +10,6 @@ pub enum Token {
 #[cfg(test)]
 #[rustfmt::skip]
 pub(crate) mod test_macros {
-    use super::*;
-
     macro_rules! lp { () => { crate::token::Token::LParen } }
     macro_rules! rp { () => { crate::token::Token::RParen } }
     macro_rules! ident { ($str:literal) => { crate::token::Token::Identifier($str.to_string())   } }
