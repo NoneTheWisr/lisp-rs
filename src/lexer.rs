@@ -195,7 +195,7 @@ mod tests {
         test_string_ok_single {r#"" ""#, Ok(vec![
             str!(" ")
         ])},
-        test_string_ok_multi {r#""1234""#, Ok(vec![
+        test_string_ok_multi {r#""12345""#, Ok(vec![
             str!("12345")
         ])},
         test_string_err {r#""123"#, Err(Error::UnclosedString)},
