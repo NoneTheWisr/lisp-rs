@@ -1,10 +1,7 @@
 use num_bigint::BigInt;
 
 #[derive(Debug, PartialEq)]
-pub enum TopLevel {
-    Multi(Vec<Expr>),
-    Single(Expr),
-}
+pub struct TopLevel(pub Vec<Expr>);
 
 #[derive(Debug, PartialEq)]
 pub enum Expr {
