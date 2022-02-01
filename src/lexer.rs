@@ -161,7 +161,7 @@ impl<'a> From<&'a str> for Lexer<std::str::Chars<'a>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::token::tests::*;
+    use crate::token::test_macros::*;
 
     macro_rules! lexer_tests {
         ($($name:ident {$input:expr, $output:expr}),+ $(,)?) => {
@@ -195,7 +195,7 @@ mod tests {
         test_string_ok_single {r#"" ""#, Ok(vec![
             str!(" ")
         ])},
-        test_string_ok_multi {r#""12345""#, Ok(vec![
+        test_string_ok_multi {r#""1234""#, Ok(vec![
             str!("12345")
         ])},
         test_string_err {r#""123"#, Err(Error::UnclosedString)},

@@ -92,7 +92,7 @@ impl<I: Iterator<Item = Item>> Parser<I> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::token::tests::*;
+    use crate::token::test_macros::*;
     use crate::ast::{Expr::*, TopLevel::*};
 
     macro_rules! parser_tests {
