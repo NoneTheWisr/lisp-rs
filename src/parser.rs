@@ -8,11 +8,13 @@ pub enum Error {
     UnbalancedParens,
 }
 
-
-
 type Item = Result<Token, LError>;
 type AstResult = Result<TopLevel, Error>;
 
+// list_stack is a stack of lists that we've encountered so far. When a '(' is
+// encountered, level is bumped up and a new list is added to the stack. When a
+// ')' is encountered, level is bumped down and the current list is popped and
+// appended to the parent list.
 pub struct Parser<I: Iterator<Item = Item>> {
     tokens: I,
     list_stack: Vec<Vec<Expr>>,
