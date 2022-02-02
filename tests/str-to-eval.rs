@@ -23,3 +23,16 @@ fn omg_errors_work_too() {
     let value = evaluate_toplevel(ast);
     assert!(matches!(value, Err(())));
 }
+
+#[test]
+fn test() {
+    let token_iter = Lexer::from(
+        "(def 'a 0)
+         (def 'a 10)
+         (def 'b 5)
+         (+ a b 5)"
+    );
+    let ast = Parser::new(token_iter).parse().unwrap();
+    let value = evaluate_toplevel(ast);
+    assert!(matches!(value, Ok(Value::Int(v)) if v == BigInt::from(20)));
+}
