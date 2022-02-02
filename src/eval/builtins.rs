@@ -9,7 +9,7 @@ impl Default for Env {
     fn default() -> Self {
         Self::new(vec![
             ("+".into(), Value::Fun(Rc::new(add))),
-            ("*".into(), Value::Fun(Rc::new(add))),
+            ("*".into(), Value::Fun(Rc::new(mul))),
             ("=".into(), Value::Fun(Rc::new(eq))),
             (">".into(), Value::Fun(Rc::new(gt))),
             ("<".into(), Value::Fun(Rc::new(lt))),
