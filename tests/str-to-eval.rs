@@ -1,6 +1,6 @@
-use lisp_rs::eval::error::Error;
-use lisp_rs::{lexer::Lexer, parser::Parser, eval::evaluator::evaluate_toplevel};
-use lisp_rs::eval::value::{Value};
+use lisp_rs::eval::{error::Error, evaluator::evaluate_toplevel, value::Value};
+use lisp_rs::frontend::{lexer::Lexer, parser::Parser};
+
 use num_bigint::BigInt;
 
 #[test]
@@ -31,7 +31,7 @@ fn test_def() {
         "(def 'a 0)
          (def 'a 10)
          (def 'b 5)
-         (+ a b 5)"
+         (+ a b 5)",
     );
     let ast = Parser::new(token_iter).parse().unwrap();
     let value = evaluate_toplevel(ast);
@@ -44,7 +44,7 @@ fn test_def_string_mul_and_cmp() {
         r#"(def 'p1 "ha")
            (def 'p3 "it")
            (= (+ (* p1 2) " i did " p3)
-              "haha i did it")"#
+              "haha i did it")"#,
     );
     let ast = Parser::new(token_iter).parse().unwrap();
     let value = evaluate_toplevel(ast);

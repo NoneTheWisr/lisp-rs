@@ -1,5 +1,5 @@
 use crate::{
-    ast::{Expr, TopLevel},
+    frontend::ast::{Expr, TopLevel},
     eval::error::Error,
 };
 

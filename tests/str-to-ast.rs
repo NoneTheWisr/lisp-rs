@@ -1,5 +1,5 @@
-use lisp_rs::{lexer::Lexer, parser::Parser};
-use lisp_rs::ast::{Expr::*, TopLevel};
+use lisp_rs::frontend::{lexer::Lexer, parser::Parser};
+use lisp_rs::frontend::ast::{Expr::*, TopLevel};
 
 macro_rules! str_to_ast_tests {
     ($($name:ident {$input:expr, $output:expr}),+ $(,)?) => {

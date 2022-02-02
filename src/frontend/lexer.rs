@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use std::iter::Peekable;
 
-use crate::token::Token;
+use super::token::Token;
 
 // -------------------------------------------------------------------------- //
 // Error type                                                                 //
@@ -176,7 +176,7 @@ impl<'a> From<&'a str> for Lexer<std::str::Chars<'a>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::token::test_macros::*;
+    use crate::frontend::token::test_macros::*;
 
     macro_rules! lexer_tests {
         ($($name:ident {$input:expr, $output:expr}),+ $(,)?) => {

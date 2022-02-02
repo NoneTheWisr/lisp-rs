@@ -1,10 +1,8 @@
 use std::collections::HashSet;
 
-use crate::ast::*;
-use crate::lexer::Error as LError;
-use crate::token::Token;
-
-use crate::macros::assert_unqoted;
+use super::ast::*;
+use super::lexer::Error as LError;
+use super::token::Token;
 
 // -------------------------------------------------------------------------- //
 // Error type                                                                 //
@@ -29,6 +27,18 @@ impl From<LError> for Error {
 
 type Item = Result<Token, LError>;
 type AstResult = Result<TopLevel, Error>;
+
+// -------------------------------------------------------------------------- //
+// Macros                                                                     //
+// -------------------------------------------------------------------------- //
+
+macro_rules! assert_unqoted {
+    ($self:ident) => {
+        if $self.should_quote() {
+            return Some(crate::frontend::parser::Error::QuotingNotSupported)
+        }
+    }
+}
 
 // -------------------------------------------------------------------------- //
 // Parser struct                                                              //
@@ -178,8 +188,8 @@ impl<I: Iterator<Item = Item>> Parser<I> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::token::test_macros::*;
-    use crate::ast::{Expr::*, TopLevel};
+    use crate::frontend::token::test_macros::*;
+    use crate::frontend::ast::{Expr::*, TopLevel};
 
     macro_rules! parser_tests {
         ($($name:ident {[$($item:expr),*], $output:expr}),* $(,)?) => {
