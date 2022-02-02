@@ -27,3 +27,17 @@ impl PartialEq for Value {
         }
     }
 }
+
+impl std::fmt::Debug for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Int(arg0) => f.debug_tuple("Int").field(arg0).finish(),
+            Self::Str(arg0) => f.debug_tuple("Str").field(arg0).finish(),
+            Self::Bool(arg0) => f.debug_tuple("Bool").field(arg0).finish(),
+            Self::Fun(_) => write!(f, "Fun"),
+            Self::Nil => write!(f, "Nil"),
+            Self::Symbol(arg0) => f.debug_tuple("Symbol").field(arg0).finish(),
+            Self::None => write!(f, "None"),
+        }
+    }
+}
