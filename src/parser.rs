@@ -4,11 +4,19 @@ use crate::ast::*;
 use crate::lexer::Error as LError;
 use crate::token::Token;
 
+use crate::macros::assert_unqoted;
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Error {
     LexerError(LError),
     UnbalancedParens,
-    DisallowedQuoting,
+    QuotingNotSupported,
+}
+
+impl From<LError> for Error {
+    fn from(err: LError) -> Self {
+        Self::LexerError(err)
+    }
 }
 
 type Item = Result<Token, LError>;
@@ -42,24 +50,18 @@ impl<I: Iterator<Item = Item>> Parser<I> {
         // I must be doing something really wrong if I have to use this instead
         // of `for token in self.tokens`. I've tried multiple things but this
         // seemed to be the only reasonable one that worked 
-        while let Some(token) = self.tokens.next() {
-            match token {
-                Ok(token) => {
-                    if let Some(err) = match token {
-                        Token::LParen => self.lparen(),
-                        Token::RParen => self.rparen(),
-                        Token::Quote => self.quote(),
-                        Token::Identifier(str) => self.ident(str),
-                        Token::Integer(str) => self.int(str),
-                        Token::String(str) => self.str(str),
-                        Token::Boolean(val) => self.bool(val),
-                    } {
-                        return Err(err);
-                    }
-                }
-                Err(error) => {
-                    return Err(Error::LexerError(error));
-                }
+        while let Some(token_result) = self.tokens.next() {
+            let token = token_result?;
+            if let Some(err) = match token {
+                Token::LParen => self.lparen(),
+                Token::RParen => self.rparen(),
+                Token::Quote => self.quote(),
+                Token::Identifier(str) => self.ident(str),
+                Token::Integer(str) => self.int(str),
+                Token::String(str) => self.str(str),
+                Token::Boolean(val) => self.bool(val),
+            } {
+                return Err(err);
             }
         }
         
@@ -80,10 +82,11 @@ impl<I: Iterator<Item = Item>> Parser<I> {
         if self.level > 0 {
             self.level -= 1;
 
+            // I haven't implemented quoting lists yet so it's an error.
+            assert_unqoted!(self);
+
             let current = self.list_stack.pop().unwrap();
-            let value = self.quote_if_needed(Expr::List(current));
-            let parent = self.list_stack.last_mut().unwrap();
-            parent.push(value);
+            self.push_last(Expr::List(current));
 
             None
         } else {
@@ -95,35 +98,32 @@ impl<I: Iterator<Item = Item>> Parser<I> {
         None
     }
 
+
     fn ident(&mut self, str: String) -> Option<Error> {
         let value = self.quote_if_needed(Expr::Ident(str));
-        self.list_stack.last_mut().unwrap().push(value);
+        self.push_last(value);
         None
     }
     fn int(&mut self, str: String) -> Option<Error> {
-        if self.should_quote() {
-            Some(Error::DisallowedQuoting)
-        } else {
-            let int = str.parse().unwrap();
-            self.list_stack.last_mut().unwrap().push(Expr::Int(int));
-            None
-        }
+        assert_unqoted!(self);
+        // Only valid ints should end up here.
+        let int = str.parse().unwrap();
+        self.push_last(Expr::Int(int));
+        None
     }
     fn str(&mut self, str: String) -> Option<Error> {
-        if self.should_quote() {
-            Some(Error::DisallowedQuoting)
-        } else {
-            self.list_stack.last_mut().unwrap().push(Expr::Str(str));
-            None
-        }
+        assert_unqoted!(self);
+        self.push_last(Expr::Str(str));
+        None
     }
     fn bool(&mut self, val: bool) -> Option<Error> {
-        if self.should_quote() {
-            Some(Error::DisallowedQuoting)
-        } else {
-            self.list_stack.last_mut().unwrap().push(Expr::Bool(val));
-            None
-        }
+        assert_unqoted!(self);
+        self.push_last(Expr::Bool(val));
+        None
+    }
+
+    fn push_last(&mut self, expr: Expr) {
+        self.list_stack.last_mut().unwrap().push(expr);
     }
 
     fn should_quote(&mut self) -> bool {
@@ -135,7 +135,6 @@ impl<I: Iterator<Item = Item>> Parser<I> {
             false
         }
     }
-
     fn quote_if_needed(&mut self, expr: Expr) -> Expr {
         if self.should_quote() {
             Expr::Quoted(Box::new(expr))
@@ -223,19 +222,7 @@ mod tests {
                 lp!(), ident!("def"), q!(), ident!("a"),
                                       q!(), lp!(), int!("1"), int!("2"), int!("3"), rp!(), rp!()
             ],
-            Ok(
-                TopLevel(vec![
-                    List(vec![
-                        Ident("def".into()),
-                        Quoted(Box::new(Ident("a".into()))),
-                        Quoted(Box::new(List(vec![
-                            Int(1.into()),
-                            Int(2.into()),
-                            Int(3.into()),
-                        ])))
-                    ])
-                ])
-            )
+            Err(Error::QuotingNotSupported)
         },
         test_err_1 { [lp!(), int!("2")], Err(Error::UnbalancedParens)},
         test_err_2 { [int!("2"), rp!()], Err(Error::UnbalancedParens)},
