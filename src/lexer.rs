@@ -69,7 +69,13 @@ impl<I: Iterator<Item = char>> Lexer<I> {
     }
     fn parse_identifier(&mut self) -> TokResult {
         let matcher = |c: &char| c.is_ascii_graphic() && !"()\"".contains(*c);
-        Ok(Token::Identifier(self.collect_while(matcher)))
+        let string = self.collect_while(matcher);
+
+        Ok(match &string[..] {
+            "true"  => Token::Boolean(true),
+            "false" => Token::Boolean(false),
+            _ => Token::Identifier(string),
+        })
     }
 
     // Integer -------------------------------------------------------------- //
@@ -200,6 +206,11 @@ mod tests {
             str!("12345")
         ])},
         test_string_err {r#""123"#, Err(Error::UnclosedString)},
+        test_bool_true {"true", Ok(vec![bool!(true)])},
+        test_bool_false {"false", Ok(vec![bool!(false)])},
+        test_bool_postfix {"atrue", Ok(vec![ident!("atrue")])},
+        test_bool_suffix {"truea", Ok(vec![ident!("truea")])},
+        test_bool_enclosed {"atruea", Ok(vec![ident!("atruea")])},
         test_mixed_1 {"124<./S?>F", Ok(vec![
             int!("124"),
             ident!("<./S?>F")
