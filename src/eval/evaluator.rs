@@ -12,11 +12,15 @@ use super::{env::Env, value::Value};
 type EResult = Result<Value, Error>;
 
 // -------------------------------------------------------------------------- //
-// Primary parsing function                                                   //
+// Primary parsing functions                                                  //
 // -------------------------------------------------------------------------- //
 
 pub fn evaluate_toplevel(ast: TopLevel) -> EResult {
     eval_toplevel(ast, &mut Env::default())
+}
+
+pub fn evaluate_toplevel_with_env(ast: TopLevel, env: &mut Env) -> EResult {
+    eval_toplevel(ast, env)
 }
 
 // -------------------------------------------------------------------------- //

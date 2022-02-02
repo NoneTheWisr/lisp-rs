@@ -5,7 +5,8 @@ use std::io::Write;
 use std::process;
 
 use itertools::Itertools;
-use lisp_rs::eval::evaluator::evaluate_toplevel;
+use lisp_rs::eval::evaluator::*;
+use lisp_rs::eval::env::Env;
 use lisp_rs::frontend::lexer::Lexer;
 use lisp_rs::frontend::parser;
 use parser::Parser;
@@ -25,6 +26,8 @@ fn main() {
 
 fn repl_mode() {
     println!("Welcome to Lame Repl(TM). Multiline input is not supported.");
+    let mut env = Env::default();
+
     loop {
         print!("> ");
         io::stdout().flush().unwrap();
@@ -39,7 +42,7 @@ fn repl_mode() {
             process::exit(0);
         }
 
-        eval_string(&input, false);
+        eval_string(&input, false, Some(&mut env));
     }
 }
 
@@ -53,10 +56,10 @@ fn file_mode(args: Vec<String>) {
         Ok(contents) => contents,
     };
 
-    eval_string(&source, true)
+    eval_string(&source, true, None)
 }
 
-fn eval_string(source: &str, quit: bool) {
+fn eval_string(source: &str, quit_on_err: bool, env: Option<&mut Env>) {
     let tokens = Lexer::from(source);
     let ast = match Parser::new(tokens).parse() {
         Err(error) => {
@@ -65,18 +68,22 @@ fn eval_string(source: &str, quit: bool) {
                 error => println!("Parsing error: {error:?}"),
             };
             
-            if quit { process::exit(1); } else { return; }
+            if quit_on_err { process::exit(1); } else { return; }
         }
         Ok(ast) => ast,
     };
 
-    let result = match evaluate_toplevel(ast) {
+    let value_result = match env {
+        Some(env) => evaluate_toplevel_with_env(ast, env),
+        None => evaluate_toplevel(ast),
+    };
+    let value = match value_result {
         Err(error) => {
             println!("Evaluation error: {error:?}");
-            if quit { process::exit(1); } else { return; }
+            if quit_on_err { process::exit(1); } else { return; }
         }
         Ok(value) => value,
     };
 
-    println!(": {result:?}");
+    println!(": {value:?}");
 }
