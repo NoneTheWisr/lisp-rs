@@ -10,4 +10,3 @@ pub enum Value {
     Nil,
     None,
 }
-
