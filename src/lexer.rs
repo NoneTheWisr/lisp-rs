@@ -223,5 +223,18 @@ mod tests {
             int!("10"),
             rp!()
         ])},
+        test_quote_3 {"(def 'a '(1 2 3))", Ok(vec![
+            lp!(),
+            ident!("def"),
+            q!(),
+            ident!("a"),
+            q!(),
+            lp!(),
+            int!("1"),
+            int!("2"),
+            int!("3"),
+            rp!(),
+            rp!()
+        ])},
     }
 }

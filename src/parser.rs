@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::ast::*;
 use crate::lexer::Error as LError;
 use crate::token::Token;
@@ -6,6 +8,7 @@ use crate::token::Token;
 pub enum Error {
     LexerError(LError),
     UnbalancedParens,
+    DisallowedQuoting,
 }
 
 type Item = Result<Token, LError>;
@@ -19,6 +22,7 @@ pub struct Parser<I: Iterator<Item = Item>> {
     tokens: I,
     list_stack: Vec<Vec<Expr>>,
     level: u64,
+    quote_levels: HashSet<u64>
 }
 
 impl<I: Iterator<Item = Item>> Parser<I> {
@@ -27,6 +31,7 @@ impl<I: Iterator<Item = Item>> Parser<I> {
             tokens,
             list_stack: Vec::new(),
             level: 0,
+            quote_levels: HashSet::new()
         }
     }
 
@@ -43,6 +48,7 @@ impl<I: Iterator<Item = Item>> Parser<I> {
                     if let Some(err) = match token {
                         Token::LParen => self.lparen(),
                         Token::RParen => self.rparen(),
+                        Token::Quote => self.quote(),
                         Token::Identifier(str) => self.ident(str),
                         Token::Integer(str) => self.int(str),
                         Token::String(str) => self.str(str),
@@ -55,7 +61,7 @@ impl<I: Iterator<Item = Item>> Parser<I> {
                 }
             }
         }
-
+        
         if self.level != 0 {
             return Err(Error::UnbalancedParens);
         }
@@ -74,26 +80,59 @@ impl<I: Iterator<Item = Item>> Parser<I> {
             self.level -= 1;
 
             let current = self.list_stack.pop().unwrap();
+            let value = self.quote_if_needed(Expr::List(current));
             let parent = self.list_stack.last_mut().unwrap();
-            parent.push(Expr::List(current));
+            parent.push(value);
 
             None
         } else {
             Some(Error::UnbalancedParens)
         }
     }
+    fn quote(&mut self) -> Option<Error> {
+        self.quote_levels.insert(self.level);
+        None
+    }
+
     fn ident(&mut self, str: String) -> Option<Error> {
-        self.list_stack.last_mut().unwrap().push(Expr::Ident(str));
+        let value = self.quote_if_needed(Expr::Ident(str));
+        self.list_stack.last_mut().unwrap().push(value);
         None
     }
     fn int(&mut self, str: String) -> Option<Error> {
-        let int = str.parse().unwrap();
-        self.list_stack.last_mut().unwrap().push(Expr::Int(int));
-        None
+        if self.should_quote() {
+            Some(Error::DisallowedQuoting)
+        } else {
+            let int = str.parse().unwrap();
+            self.list_stack.last_mut().unwrap().push(Expr::Int(int));
+            None
+        }
     }
     fn str(&mut self, str: String) -> Option<Error> {
-        self.list_stack.last_mut().unwrap().push(Expr::Str(str));
-        None
+        if self.should_quote() {
+            Some(Error::DisallowedQuoting)
+        } else {
+            self.list_stack.last_mut().unwrap().push(Expr::Str(str));
+            None
+        }
+    }
+
+    fn should_quote(&mut self) -> bool {
+        let level = &self.level;
+        if self.quote_levels.contains(level) {
+            self.quote_levels.remove(level);
+            true
+        } else {
+            false
+        }
+    }
+
+    fn quote_if_needed(&mut self, expr: Expr) -> Expr {
+        if self.should_quote() {
+            Expr::Quoted(Box::new(expr))
+        } else {
+            expr
+        }
     }
 }
 
@@ -153,6 +192,39 @@ mod tests {
                         Int(9.into())
                     ]),
                     Int(1.into())
+                ])
+            )
+        },
+        test_ok_5_quoting_1 {
+            [
+                lp!(), ident!("def"), q!(), ident!("a"), int!("10"), rp!()
+            ],
+            Ok(
+                TopLevel(vec![
+                    List(vec![
+                        Ident("def".into()),
+                        Quoted(Box::new(Ident("a".into()))),
+                        Int(10.into())
+                    ])
+                ])
+            )
+        },
+        test_ok_6_quoting_2 {
+            [
+                lp!(), ident!("def"), q!(), ident!("a"),
+                                      q!(), lp!(), int!("1"), int!("2"), int!("3"), rp!(), rp!()
+            ],
+            Ok(
+                TopLevel(vec![
+                    List(vec![
+                        Ident("def".into()),
+                        Quoted(Box::new(Ident("a".into()))),
+                        Quoted(Box::new(List(vec![
+                            Int(1.into()),
+                            Int(2.into()),
+                            Int(3.into()),
+                        ])))
+                    ])
                 ])
             )
         },
