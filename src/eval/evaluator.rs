@@ -9,7 +9,11 @@ pub fn evaluate_toplevel(ast: TopLevel) -> EResult {
 }
 
 fn eval_toplevel(ast: TopLevel, env: &mut Env) -> EResult {
-    ast.0.into_iter().map(|expr| eval_expr(expr, env)).last().unwrap_or(Err(()))
+    ast.0
+        .into_iter()
+        .map(|expr| eval_expr(expr, env))
+        .last()
+        .unwrap_or(Ok(Value::None))
 }
 
 fn eval_expr(ast: Expr, env: &mut Env) -> EResult {
@@ -24,14 +28,15 @@ fn eval_expr(ast: Expr, env: &mut Env) -> EResult {
 fn eval_list(body: Vec<Expr>, env: &mut Env) -> EResult {
     match body.len() {
         0 => Ok(Value::Nil),
-        1 => eval_expr(body.into_iter().next().unwrap(), env),
-        _ => {
+        n => {
             let mut values = body.into_iter().map(|item| eval_expr(item, env));
             let first = values.next().unwrap()?;
             let rest = values.collect::<Result<Vec<_>, _>>()?;
-            
+
             if let Value::Fun(fun) = first {
-                fun(rest)
+                fun(rest, env)
+            } else if n == 1 {
+                Ok(first)
             } else {
                 Err(())
             }
