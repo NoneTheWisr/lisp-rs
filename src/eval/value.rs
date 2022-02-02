@@ -10,5 +10,6 @@ pub enum Value {
     Str(String),
     Fun(Rc<dyn Fn(Vec<Value>, &mut Env) -> Result<Value, ()>>),
     Nil,
+    Symbol(String),
     None,
 }
