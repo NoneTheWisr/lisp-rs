@@ -17,7 +17,7 @@ fn eval_toplevel(ast: TopLevel, env: &mut Env) -> EResult {
 }
 
 fn eval_expr(ast: Expr, env: &mut Env) -> EResult {
-    match ast {
+    (match ast {
         Expr::List(body) => eval_list(body, env),
         Expr::Ident(name) => lookup_indent(name, env),
         Expr::Int(value) => Ok(Value::Int(value)),
@@ -28,7 +28,7 @@ fn eval_expr(ast: Expr, env: &mut Env) -> EResult {
             Expr::List(_) => unimplemented!(),
             Expr::Ident(name) => Ok(Value::Symbol(name)),
         },
-    }
+    })
 }
 
 fn eval_list(body: Vec<Expr>, env: &mut Env) -> EResult {

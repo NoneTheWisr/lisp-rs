@@ -11,8 +11,6 @@ impl Default for Env {
             ("+".into(), Value::Fun(Rc::new(add))),
             ("*".into(), Value::Fun(Rc::new(mul))),
             ("=".into(), Value::Fun(Rc::new(eq))),
-            (">".into(), Value::Fun(Rc::new(gt))),
-            ("<".into(), Value::Fun(Rc::new(lt))),
             ("def".into(), Value::Fun(Rc::new(def))),
         ].into_iter().collect())
     }
@@ -78,26 +76,6 @@ pub(super) fn eq(args: Vec<Value>, _: &mut Env) -> Result<Value, ()> {
     assert_arg_count!(args, (2..));
 
     Ok(Value::Bool(args.into_iter().all_equal()))
-}
-
-pub(super) fn gt(args: Vec<Value>, _: &mut Env) -> Result<Value, ()> {
-    assert_arg_count!(args, 2);
-
-    match args.into_iter().next_tuple().unwrap() {
-        (Value::Int(lhs), Value::Int(rhs)) => Ok(Value::Bool(lhs > rhs)),
-        (Value::Str(lhs), Value::Str(rhs)) => Ok(Value::Bool(lhs > rhs)),
-        _ => Err(()),
-    }
-}
-
-pub(super) fn lt(args: Vec<Value>, _: &mut Env) -> Result<Value, ()> {
-    assert_arg_count!(args, 2);
-
-    match args.into_iter().next_tuple().unwrap() {
-        (Value::Int(lhs), Value::Int(rhs)) => Ok(Value::Bool(lhs < rhs)),
-        (Value::Str(lhs), Value::Str(rhs)) => Ok(Value::Bool(lhs < rhs)),
-        _ => Err(()),
-    }
 }
 
 pub(super) fn def(args: Vec<Value>, env: &mut Env) -> Result<Value, ()> {

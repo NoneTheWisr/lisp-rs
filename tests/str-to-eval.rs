@@ -40,8 +40,10 @@ fn test_def() {
 #[test]
 fn test_def_string_mul_and_cmp() {
     let token_iter = Lexer::from(
-        r#"(def 'str "ha")
-           (= (* str 2) "haha")"#
+        r#"(def 'p1 "ha")
+           (def 'p3 "it")
+           (= (+ (* p1 2) " i did " p3)
+              "haha i did it")"#
     );
     let ast = Parser::new(token_iter).parse().unwrap();
     let value = evaluate_toplevel(ast);
