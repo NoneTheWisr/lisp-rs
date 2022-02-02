@@ -6,6 +6,10 @@ use crate::token::Token;
 
 use crate::macros::assert_unqoted;
 
+// -------------------------------------------------------------------------- //
+// Error type                                                                 //
+// -------------------------------------------------------------------------- //
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Error {
     LexerError(LError),
@@ -19,8 +23,16 @@ impl From<LError> for Error {
     }
 }
 
+// -------------------------------------------------------------------------- //
+// Type aliases                                                               //
+// -------------------------------------------------------------------------- //
+
 type Item = Result<Token, LError>;
 type AstResult = Result<TopLevel, Error>;
+
+// -------------------------------------------------------------------------- //
+// Parser struct                                                              //
+// -------------------------------------------------------------------------- //
 
 // list_stack is a stack of lists that we've encountered so far. When a '('
 // is encountered, level is bumped up and a new list is pushed onto the stack.
@@ -42,6 +54,10 @@ impl<I: Iterator<Item = Item>> Parser<I> {
             quote_levels: HashSet::new()
         }
     }
+
+    // ---------------------------------------------------------------------- //
+    // Main parse method                                                      //
+    // ---------------------------------------------------------------------- //
 
     pub fn parse(&mut self) -> AstResult {
         // This vec (list) will contain all top-level expressions
@@ -73,6 +89,11 @@ impl<I: Iterator<Item = Item>> Parser<I> {
         Ok(TopLevel(self.list_stack.pop().unwrap()))
     }
 
+    // ---------------------------------------------------------------------- //
+    // Token specific methods                                                 //
+    // ---------------------------------------------------------------------- //
+
+    // Grouping token methods: (, ), ' -------------------------------------- //
     fn lparen(&mut self) -> Option<Error> {
         self.level += 1;
         self.list_stack.push(Vec::new());
@@ -98,7 +119,7 @@ impl<I: Iterator<Item = Item>> Parser<I> {
         None
     }
 
-
+    // Other token methods -------------------------------------------------- //
     fn ident(&mut self, str: String) -> Option<Error> {
         let value = self.quote_if_needed(Expr::Ident(str));
         self.push_last(value);
@@ -122,10 +143,16 @@ impl<I: Iterator<Item = Item>> Parser<I> {
         None
     }
 
+    // ---------------------------------------------------------------------- //
+    // Helper methods                                                         //
+    // ---------------------------------------------------------------------- //
+
+    // List stack access ---------------------------------------------------- //
     fn push_last(&mut self, expr: Expr) {
         self.list_stack.last_mut().unwrap().push(expr);
     }
 
+    // Quote realed methods ------------------------------------------------- //
     fn should_quote(&mut self) -> bool {
         let level = &self.level;
         if self.quote_levels.contains(level) {
@@ -143,6 +170,10 @@ impl<I: Iterator<Item = Item>> Parser<I> {
         }
     }
 }
+
+// -------------------------------------------------------------------------- //
+// Tests                                                                      //
+// -------------------------------------------------------------------------- //
 
 #[cfg(test)]
 mod tests {
