@@ -37,6 +37,7 @@ impl<I: Iterator<Item = char>> Lexer<I> {
         let next_token = match next_char {
             '(' => self.accept(LParen),
             ')' => self.accept(RParen),
+            '\'' => self.accept(Quote),
             c if Self::starts_identifier(c) => self.parse_identifier(),
             c if Self::starts_integer(c) => self.parse_integer(),
             c if Self::starts_string(c) => self.parse_string(),
@@ -64,7 +65,7 @@ impl<I: Iterator<Item = char>> Lexer<I> {
 
     // Identifier ----------------------------------------------------------- //
     fn starts_identifier(c: &char) -> bool {
-        c.is_ascii_graphic() && !c.is_ascii_digit() && !"()\"".contains(*c)
+        c.is_ascii_graphic() && !c.is_ascii_digit() && !"()'\"".contains(*c)
     }
     fn parse_identifier(&mut self) -> TokResult {
         let matcher = |c: &char| c.is_ascii_graphic() && !"()\"".contains(*c);
@@ -208,6 +209,18 @@ mod tests {
             ident!("+"),
             ident!("-5-124<./S?>F"),
             int!("35"),
+            rp!()
+        ])},
+        test_quote_1 {"'1", Ok(vec![
+            q!(),
+            int!("1")
+        ])},
+        test_quote_2 {"(def 'a 10)", Ok(vec![
+            lp!(),
+            ident!("def"),
+            q!(),
+            ident!("a"),
+            int!("10"),
             rp!()
         ])},
     }
