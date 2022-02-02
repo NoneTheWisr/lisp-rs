@@ -1,3 +1,4 @@
+use lisp_rs::eval::error::Error;
 use lisp_rs::{lexer::Lexer, parser::Parser, eval::evaluator::evaluate_toplevel};
 use lisp_rs::eval::value::{Value};
 use num_bigint::BigInt;
@@ -21,7 +22,7 @@ fn omg_errors_work_too() {
     let token_iter = Lexer::from(r#"(+ "5" (+ "1" "2" "3" "4" 5))"#);
     let ast = Parser::new(token_iter).parse().unwrap();
     let value = evaluate_toplevel(ast);
-    assert!(matches!(value, Err(())));
+    assert!(matches!(value, Err(Error::TypeError)));
 }
 
 #[test]

@@ -1,12 +1,27 @@
-use crate::ast::{Expr, TopLevel};
+use crate::{
+    ast::{Expr, TopLevel},
+    eval::error::Error,
+};
 
 use super::{env::Env, value::Value};
 
-type EResult = Result<Value, ()>;
+// -------------------------------------------------------------------------- //
+// Type aliases                                                               //
+// -------------------------------------------------------------------------- //
+
+type EResult = Result<Value, Error>;
+
+// -------------------------------------------------------------------------- //
+// Primary parsing function                                                   //
+// -------------------------------------------------------------------------- //
 
 pub fn evaluate_toplevel(ast: TopLevel) -> EResult {
     eval_toplevel(ast, &mut Env::default())
 }
+
+// -------------------------------------------------------------------------- //
+// Helper parsing functions                                                   //
+// -------------------------------------------------------------------------- //
 
 fn eval_toplevel(ast: TopLevel, env: &mut Env) -> EResult {
     ast.0
@@ -17,7 +32,7 @@ fn eval_toplevel(ast: TopLevel, env: &mut Env) -> EResult {
 }
 
 fn eval_expr(ast: Expr, env: &mut Env) -> EResult {
-    (match ast {
+    match ast {
         Expr::List(body) => eval_list(body, env),
         Expr::Ident(name) => lookup_indent(name, env),
         Expr::Int(value) => Ok(Value::Int(value)),
@@ -28,7 +43,7 @@ fn eval_expr(ast: Expr, env: &mut Env) -> EResult {
             Expr::List(_) => unimplemented!(),
             Expr::Ident(name) => Ok(Value::Symbol(name)),
         },
-    })
+    }
 }
 
 fn eval_list(body: Vec<Expr>, env: &mut Env) -> EResult {
@@ -44,12 +59,14 @@ fn eval_list(body: Vec<Expr>, env: &mut Env) -> EResult {
             } else if n == 1 {
                 Ok(first)
             } else {
-                Err(())
+                Err(Error::CallingANonFunctionValue)
             }
         }
     }
 }
 
 fn lookup_indent(name: String, env: &Env) -> EResult {
-    env.get_binding(name).map(Clone::clone).ok_or(())
+    env.get_binding(name)
+        .map(Clone::clone)
+        .ok_or(Error::UndefinedBinding)
 }

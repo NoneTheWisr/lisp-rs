@@ -1,8 +1,9 @@
+use itertools::Itertools;
 use std::rc::Rc;
 
-use itertools::Itertools;
+use super::{env::Env, error::Error, value::Value};
 
-use super::{env::Env, value::Value};
+type EResult = Result<Value, Error>;
 
 impl Default for Env {
     #[rustfmt::skip]
@@ -19,66 +20,79 @@ impl Default for Env {
 macro_rules! assert_arg_count {
     ($args:ident, $count:pat) => {
         if !matches!($args.len(), $count) {
-            return Err(());
-        }
-    };
-    ($args:ident, $count:pat, $err:expr) => {
-        if !matches!($args.len(), $count) {
-            return Err($err);
+            return Err(crate::eval::error::Error::WrongNumberOfArguments);
         }
     };
 }
 
-pub(super) fn add(args: Vec<Value>, _: &mut Env) -> Result<Value, ()> {
+pub(super) fn add(args: Vec<Value>, _: &mut Env) -> EResult {
     assert_arg_count!(args, (2..));
 
     use Value::*;
     match args[0] {
         Int(_) => args
             .into_iter()
-            .map(|v| if let Int(v) = v { Ok(v) } else { Err(()) })
+            .map(|v| {
+                if let Int(v) = v {
+                    Ok(v)
+                } else {
+                    Err(Error::TypeError)
+                }
+            })
             .sum::<Result<_, _>>()
             .map(Int),
         Str(_) => args
             .into_iter()
-            .map(|v| if let Str(v) = v { Ok(v) } else { Err(()) })
+            .map(|v| {
+                if let Str(v) = v {
+                    Ok(v)
+                } else {
+                    Err(Error::TypeError)
+                }
+            })
             .collect::<Result<_, _>>()
             .map(Str),
-        _ => Err(()),
+        _ => Err(Error::TypeError),
     }
 }
 
-pub(super) fn mul(args: Vec<Value>, _: &mut Env) -> Result<Value, ()> {
+pub(super) fn mul(args: Vec<Value>, _: &mut Env) -> EResult {
     assert_arg_count!(args, (2..));
 
     use Value::*;
     match args[0] {
         Int(_) => args
             .into_iter()
-            .map(|v| if let Int(v) = v { Ok(v) } else { Err(()) })
+            .map(|v| {
+                if let Int(v) = v {
+                    Ok(v)
+                } else {
+                    Err(Error::TypeError)
+                }
+            })
             .product::<Result<_, _>>()
             .map(Int),
         Str(_) => {
             assert_arg_count!(args, 2);
             match args.into_iter().next_tuple().unwrap() {
                 (Value::Str(str), Value::Int(int)) => {
-                    let int: usize = int.try_into().map_err(|_| ())?;
+                    let int: usize = int.try_into().map_err(|_| Error::InternalError)?;
                     Ok(Value::Str(str.repeat(int)))
                 }
-                _ => Err(()),
+                _ => Err(Error::TypeError),
             }
         }
-        _ => Err(()),
+        _ => Err(Error::TypeError),
     }
 }
 
-pub(super) fn eq(args: Vec<Value>, _: &mut Env) -> Result<Value, ()> {
+pub(super) fn eq(args: Vec<Value>, _: &mut Env) -> EResult {
     assert_arg_count!(args, (2..));
 
     Ok(Value::Bool(args.into_iter().all_equal()))
 }
 
-pub(super) fn def(args: Vec<Value>, env: &mut Env) -> Result<Value, ()> {
+pub(super) fn def(args: Vec<Value>, env: &mut Env) -> EResult {
     assert_arg_count!(args, 2);
 
     use Value::*;
@@ -86,6 +100,6 @@ pub(super) fn def(args: Vec<Value>, env: &mut Env) -> Result<Value, ()> {
         env.add_binding(name, value);
         Ok(None)
     } else {
-        Err(())
+        Err(Error::TypeError)
     }
 }
