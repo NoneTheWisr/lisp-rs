@@ -10,4 +10,5 @@ pub enum Expr {
     Ident(String),
     Int(BigInt),
     Str(String),
+    Bool(bool),
 }

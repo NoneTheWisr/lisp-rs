@@ -52,6 +52,7 @@ impl<I: Iterator<Item = Item>> Parser<I> {
                         Token::Identifier(str) => self.ident(str),
                         Token::Integer(str) => self.int(str),
                         Token::String(str) => self.str(str),
+                        Token::Boolean(val) => self.bool(val),
                     } {
                         return Err(err);
                     }
@@ -113,6 +114,14 @@ impl<I: Iterator<Item = Item>> Parser<I> {
             Some(Error::DisallowedQuoting)
         } else {
             self.list_stack.last_mut().unwrap().push(Expr::Str(str));
+            None
+        }
+    }
+    fn bool(&mut self, val: bool) -> Option<Error> {
+        if self.should_quote() {
+            Some(Error::DisallowedQuoting)
+        } else {
+            self.list_stack.last_mut().unwrap().push(Expr::Bool(val));
             None
         }
     }

@@ -8,6 +8,7 @@ use super::env::Env;
 pub enum Value {
     Int(BigInt),
     Str(String),
+    Bool(bool),
     Fun(Rc<dyn Fn(Vec<Value>, &mut Env) -> Result<Value, ()>>),
     Nil,
     Symbol(String),

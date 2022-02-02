@@ -22,8 +22,9 @@ fn eval_expr(ast: Expr, env: &mut Env) -> EResult {
         Expr::Ident(name) => lookup_indent(name, env),
         Expr::Int(value) => Ok(Value::Int(value)),
         Expr::Str(value) => Ok(Value::Str(value)),
+        Expr::Bool(value) => Ok(Value::Bool(value)),
         Expr::Quoted(expr) => match *expr {
-            Expr::Quoted(_) | Expr::Int(_) | Expr::Str(_) => unreachable!(),
+            Expr::Quoted(_) | Expr::Int(_) | Expr::Str(_) | Expr::Bool(_) => unreachable!(),
             Expr::List(_) => unimplemented!(),
             Expr::Ident(name) => Ok(Value::Symbol(name)),
         },
